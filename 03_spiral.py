@@ -1,6 +1,9 @@
 from math import floor
+import numpy as np
 
 loc = 347991
+
+# PART 1
 
 # The spiral comprises a square of filled memory locations and a tail wrapping around it. The number of locs in the
 # square is its edge length (its dimension) ^ 2. The tail is the difference of the current location and the square's
@@ -25,3 +28,20 @@ print('Steps from edge\'s corner to midpoint: {}\nDistance to midpoint: {}'.form
 # The distance from the midpoint to the center of the square is the same value.
 total_steps = abs(dist_to_midpt) + corner_to_midpt
 print('Steps from location to access port: {}'.format(total_steps))
+
+
+# PART 2
+
+def init_grid(*args, **kwargs) -> (np.array, tuple):
+    """
+    Initializes a grid and computes the index-offset of its center point
+    :return: `grid` (a NumPy array) and `center_offset` (a tuple of indices)
+    """
+    _grid = np.zeros(*args, **kwargs)
+    center_offset = []
+    for dim in _grid.shape:
+        center_offset.append(floor(dim / 2))
+    return _grid, tuple(center_offset)
+
+
+grid, center = init_grid(11)
