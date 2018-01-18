@@ -25,23 +25,42 @@ corner_to_midpt = int((sq_dim - 1) / 2)
 dist_to_midpt = corner_to_midpt - tail_rem
 print('Steps from edge\'s corner to midpoint: {}\nDistance to midpoint: {}'.format(corner_to_midpt, dist_to_midpt))
 
-# The distance from the midpoint to the center of the square is the same value.
+# The distance from the midpoint to the center of the square is the same as the corner-to-midpoint distance.
 total_steps = abs(dist_to_midpt) + corner_to_midpt
 print('Steps from location to access port: {}'.format(total_steps))
+print('\n\n')
 
 
 # PART 2
 
-def init_grid(*args, **kwargs) -> (np.array, tuple):
+
+def init_grid(*args, **kwargs) -> (list, object):
     """
-    Initializes a grid and computes the index-offset of its center point
-    :return: `grid` (a NumPy array) and `center_offset` (a tuple of indices)
+    Initializes a grid and provides a function for indexing it using coordinates from the center point. The center point
+    is coordinate (0, 0, ..., 0)
+    :return: `grid` (a NumPy array) and `indexer` (a coordinate-mapping function)
     """
     _grid = np.zeros(*args, **kwargs)
     center_offset = []
     for dim in _grid.shape:
         center_offset.append(floor(dim / 2))
-    return _grid, tuple(center_offset)
+    center_offset = tuple(center_offset)
+
+    def indexer(*cargs) -> list:
+        """
+        A coordinate-based indexer for the grid returned by `init_grid()`. Coordinates should be provided as individual,
+        ordered arguments; not as a list or tuple.
+        :return: A list of numpy index arrays pointing to that coordinate position
+        """
+        translated = [sum(x) for x in zip(cargs, center_offset)]
+        return [np.array(x) for x in translated]  # Convert to numpy index arrays
+
+    return _grid, indexer
 
 
-grid, center = init_grid(11)
+grid, coords = init_grid((11, 11))
+val = 1
+while val <= loc:
+    grid[coords(1, 0)] = 1
+
+print(grid)
