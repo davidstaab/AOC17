@@ -2,18 +2,6 @@ from math import floor
 
 loc = 347991
 
-
-def find_square_dim(val: int) -> int:
-    """
-    Finds the dimension of a square whose areas is <= `val`.
-    :return: Dimension of the found square
-    """
-    n = 1
-    while (n * n) < val:
-        n += n
-    return n
-
-
 # The spiral comprises a square of filled memory locations and a tail wrapping around it. The number of locs in the
 # square is its edge length (its dimension) ^ 2. The tail is the difference of the current location and the square's
 # area.
