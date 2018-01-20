@@ -27,6 +27,8 @@ total_steps = abs(dist_to_midpt) + corner_to_midpt
 
 
 # TOOLS FOR PART 2
+# [dstaab] Note: This was my first time using NumPy, and I know I blew it. Do not study my code as a a good solution to
+# exercise 3 part 2. Go find a better one. <3
 
 
 def init_grid(initial_val: int, *args, **kwargs) -> (np.matrix, object):
