@@ -4,6 +4,8 @@ if __name__ == '__main__':
     exc_locals = {}
 
     with open('./registers.txt') as file:
+
+        all_time_high = -float('Inf')
         for line in file:
             fields = line.rstrip().split(sep=' ').__iter__()
             var = next(fields)
@@ -17,7 +19,9 @@ if __name__ == '__main__':
 
             cmd = '{} {} {} {}'.format(var, opr, val, ' '.join(cond)) + ' else 0'
             exec(cmd, exc_globals, exc_locals)
+            all_time_high = max(float(exc_locals[var]), all_time_high)
             print(cmd + '... ' + str(exc_locals[var]))
 
         print(exc_locals)
-        print(max(exc_locals.values()))
+        print('Highest final value: {}'.format(max(exc_locals.values())))
+        print('All-time highest value: {}'.format(all_time_high))
