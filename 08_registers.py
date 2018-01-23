@@ -16,8 +16,8 @@ if __name__ == '__main__':
                 exec('try: {}\nexcept: {} = 0'.format(v, v), exc_globals, exc_locals)  # initialize var
 
             cmd = '{} {} {} {}'.format(var, opr, val, ' '.join(cond)) + ' else 0'
-            print(cmd)
             exec(cmd, exc_globals, exc_locals)
+            print(cmd + '... ' + str(exc_locals[var]))
 
         print(exc_locals)
-        print(exc_locals[max(exc_locals)])
+        print(max(exc_locals.values()))
