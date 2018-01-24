@@ -12,23 +12,29 @@ class BangSkipper:
     def __init__(self, stream, skip=True):
         self.stream = stream
         self.skip = skip
+        self.count = 0
+
+    def __get_char(self):
+        c = self.stream.read(1)
+        if c == '':
+            raise EOFError()
+        self.count += 1
+        return c
 
     def __iter__(self):
         return self
 
     def __next__(self):
         try:
-            char = self.stream.read(1)
-        except:
-            raise
-
-        if self.skip and char == '!':
-            try:
-                char = self.stream.read(1)
-            except:
-                raise
-
-        return char
+            while 1:
+                char = self.__get_char()
+                if self.skip and char == '!':
+                    self.__get_char()  # ignore `char`, throw away next character, too
+                else:
+                    break
+            return char, self.count
+        except EOFError:
+            raise StopIteration
 
 
 class GarbageChecker:
@@ -61,9 +67,9 @@ def gen_token(stream, skip_bang: bool=True, skip_garbage: bool=True) -> str:
     :return: Token from `stream`
     """
     gc = GarbageChecker(skip_garbage)
-    for char in BangSkipper(stream, skip=skip_bang):
+    for char, ct in BangSkipper(stream, skip=skip_bang):
         if not gc.is_garbage(char):
-            yield char
+            yield char, ct
 
 
 if __name__ == '__main__':
@@ -71,11 +77,11 @@ if __name__ == '__main__':
     sum_levels = 0
     with open('./stream.txt') as file:
         cur_level = 0
-        for tok in gen_token(file):
-            print(tok, end='')
+        for tok, ct in gen_token(file):
+            print('{}:\t{}'.format(ct, tok))
             if tok == '{':
                 cur_level += 1
                 sum_levels += cur_level
             elif tok == '}' and cur_level > 0:
                 cur_level -= 1
-    print('Sum of all nesting levels: '.format(sum_levels))
+    print('Sum of all nesting levels: {}'.format(sum_levels))
