@@ -70,24 +70,23 @@ class PieceOfString(MutableSequence):
         return self._string[self.__idx(key)]
 
     def __setitem__(self, key, value):
+        val = [_ for _ in value]  # convert possibly non-subscriptable type to definitely subscriptable type
         if isinstance(key, slice):
             _s = len(self._string)
             self.__slice_bounds(key, _s)
             if key.stop >= _s:
                 split = _s - key.start
-                # todo: `value` isn't subscriptable, so I have to do this in a loop with difference indices. That sucks.
-                self._string[key.start:] = value[:split]
-                self._string[:key.stop - _s - 1] = value[split:]
+                self._string[key.start:] = val[:split]
+                self._string[:key.stop - _s - 1] = val[split:]
             else:
                 if key.start < 0:
-                    split = len(value) + key.start
-                    # todo: `value` isn't subscriptable, so I have to do this in a loop with difference indices.
-                    self._string[key.start:] = value[:split]
-                    self._string[:key.stop] = value[split:]
+                    split = len(val) + key.start
+                    self._string[key.start:] = val[:split]
+                    self._string[:key.stop] = val[split:]
                 else:
-                    self._string[key.start:key.stop] = value
+                    self._string[key.start:key.stop] = val
         else:
-            self._string[self.__idx(key)] = value
+            self._string[self.__idx(key)] = val
 
     def __delitem__(self, key):
         if isinstance(key, slice):
