@@ -86,7 +86,7 @@ class CircularBuffer(MutableSequence):
         return str(self._coll)
 
 
-class StringHash:
+class KnotHash:
     """
     A CircularBuffer interface that follows the rules of Exercise 10 with respect to pointer incrementation and the use
     of a skip value
@@ -105,6 +105,19 @@ class StringHash:
         self._ptr += length + self._skip
         self._skip += 1
 
+    def dense_hash(self, block_size: int) -> str:
+        hash_size = int(len(self._string) / block_size)
+        dense_hash = []
+        for i in range(hash_size):
+            block_start = i * block_size
+            dense_hash.append(self._string[block_start : block_start + block_size])
+        for i, block in enumerate(dense_hash):
+            hash_val = block[0]
+            for j in block[1:]:
+                hash_val ^= j
+            dense_hash[i] = hash_val
+        return ''.join('{:02X}'.format(v) for v in dense_hash)
+
     @property
     def string(self) -> CircularBuffer:
         return self._string
@@ -116,12 +129,27 @@ class StringHash:
 
 if __name__ == '__main__':
 
-    p = StringHash(256)
-
+    # PART 1
     with open('./knot_lengths.txt') as file:
         lengths = [int(x) for x in file.read().strip().split(sep=',')]
+        p = KnotHash(256)
         for length in lengths:
             p.knot(length)
 
-    print('First two numbers in list: {}, {}'.format(p.string[0], p.string[1]))
-    print('Their product: {}'.format(p.hash_val))
+        print('Part 1:')
+        print('First two numbers in list: {}, {}'.format(p.string[0], p.string[1]))
+        print('Their product: {}'.format(p.hash_val))
+
+    # PART 2
+    seq_end = [17, 31, 73, 47, 23]
+    rounds = 64
+    with open('./knot_lengths.txt') as file:
+        lengths = [ord(c) for c in file.read().strip()]  # interpret chars in file as ASCII
+        lengths += seq_end
+        p = KnotHash(256)
+        for _ in range(rounds):
+            for length in lengths:
+                p.knot(length)
+
+        print('\nPart 2:')
+        print('Dense hash: ' + p.dense_hash(block_size=16))
