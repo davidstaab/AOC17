@@ -9,18 +9,23 @@ class PieceOfString(MutableSequence):
     @staticmethod
     def __slice_bounds(key: slice, length: int):
         """
-        Checks the assumption that `key.start` will be in [-len+1:len] and `key.stop` will be in [0:2*len].
+        Validates these assumptions about a slice:
+         * `key.start` will be in [-len+1:len]
+         * `key.stop` will be in [0:2*len]
+         * `key.stop` - `key.start` will be <= len
         """
-        if key.step:
+        if key.step is not None:
             if not 0 <= key.step <= 1:
                 raise IndexError('Sorry, can\'t handle step {}. Too hard.'.format(key.step))
-        if key.start:
+        if key.start is not None:
             if not 1 - length < key.start < length:
                 raise IndexError('Can\'t unwrap list that far. Too hard.')
-            if key.stop:
+            if key.stop is not None:
                 if key.stop < key.start:
                     raise IndexError('End of range must be greater or equal to Start.')
-        if key.stop:
+                if key.stop - key.start > length:
+                    raise IndexError('Slice span is longer than the collection.')
+        if key.stop is not None:
             if not 0 < key.stop < 2 * length:
                 raise IndexError('Can\'t unwrap list that far. Too hard.')
 
@@ -30,10 +35,8 @@ class PieceOfString(MutableSequence):
         self._skip = 0
 
     def knot(self, length: int):
-        if length > len(self._string):
-            raise ValueError('{} is longer than the collection!'.format(length))
-
         # Note: Don't work on `self._string`! Work on `self` so data method overrides are put to use.
+        # (Using own public interface is a code smell. Should put this method in an encapsulating class. Oh, well.)
         self[self._ptr : self._ptr + length] = reversed(self[self._ptr : self._ptr + length])
         self._ptr += length + self._skip
         self._skip += 1
@@ -56,12 +59,9 @@ class PieceOfString(MutableSequence):
         if isinstance(key, slice):
             _s = len(self._string)
             self.__slice_bounds(key, _s)
-            new_stop = key.stop - _s if key.stop >= _s else None
-            if new_stop:
-                if key.start < 0:
-                    return self._string[key.start:] + self._string[:] + self._string[:new_stop]
-                else:
-                    return self._string[key.start:] + self._string[:new_stop]
+            if key.stop >= _s:
+                new_stop = key.stop - _s
+                return self._string[key.start:] + self._string[:new_stop]
             else:
                 if key.start < 0:
                     return self._string[key.start:] + self._string[:key.stop]
@@ -71,8 +71,23 @@ class PieceOfString(MutableSequence):
 
     def __setitem__(self, key, value):
         if isinstance(key, slice):
-            raise NotImplementedError  # todo
-        self._string[self.__idx(key)] = value
+            _s = len(self._string)
+            self.__slice_bounds(key, _s)
+            if key.stop >= _s:
+                split = _s - key.start
+                # todo: `value` isn't subscriptable, so I have to do this in a loop with difference indices. That sucks.
+                self._string[key.start:] = value[:split]
+                self._string[:key.stop - _s - 1] = value[split:]
+            else:
+                if key.start < 0:
+                    split = len(value) + key.start
+                    # todo: `value` isn't subscriptable, so I have to do this in a loop with difference indices.
+                    self._string[key.start:] = value[:split]
+                    self._string[:key.stop] = value[split:]
+                else:
+                    self._string[key.start:key.stop] = value
+        else:
+            self._string[self.__idx(key)] = value
 
     def __delitem__(self, key):
         if isinstance(key, slice):
