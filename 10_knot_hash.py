@@ -1,41 +1,33 @@
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Iterable
 
 
-class PieceOfString(MutableSequence):
+class CircularBuffer(MutableSequence):
     """
-    A list with its ends tied together like an oroborous. Indexing never raises IndexError.
+    A list with its ends tied together like an oroborous. Indexing never raises IndexError. Slicing can start at any
+    index.
     """
 
-    def __init__(self, length: int):
-        self._string = [_ for _ in range(length)]
-        self._ptr = 0
-        self._skip = 0
-
-    def knot(self, length: int):
-        # Note: Don't work on `self._string`! Work on `self` so data method overrides are put to use.
-        # (Using own public interface is a code smell. Should put this method in an encapsulating class. Oh, well.)
-        sub = self[self._ptr : self._ptr + length]
-        sub.reverse()
-        self[self._ptr: self._ptr + length] = sub
-
-        self._ptr += length + self._skip
-        self._skip += 1
+    def __init__(self, data_source: Iterable):
+        if isinstance(data_source, Iterable):
+            self._coll = [_ for _ in data_source]
+        else:
+            raise ValueError('data_source does not implement __iter__.')
 
     def insert(self, index, obj):
-        self._string.insert(self.__idx(index), obj)
+        self._coll.insert(self.__idx(index), obj)
 
     def __idx(self, index: int) -> int:
         """
         Guarantees no 'index out of range' errors by mapping index into legal range.
         """
-        return index % len(self._string)
+        return index % len(self._coll)
 
     def __slice(self, key: slice) -> slice:
         """
         Validates necessary assumptions about a slice, then maps the `start` and `stop` indices into the bounds of the
         collection.
         """
-        _s = len(self._string)
+        _s = len(self._coll)
         if key.step is not None:
             if not 0 <= key.step <= 1:
                 raise NotImplementedError('Step size > 1')
@@ -56,14 +48,14 @@ class PieceOfString(MutableSequence):
         Allows indices beyond range of buffer.
         """
         if isinstance(key, slice):
-            _s = len(self._string)
+            _s = len(self._coll)
             key = self.__slice(key)
             if key.stop >= _s:
                 split = key.stop - _s
-                return self._string[key.start:] + self._string[:split]
+                return self._coll[key.start:] + self._coll[:split]
             else:
-                return self._string[key.start:key.stop]
-        return self._string[self.__idx(key)]
+                return self._coll[key.start:key.stop]
+        return self._coll[self.__idx(key)]
 
     def __setitem__(self, key, value):
         """
@@ -71,37 +63,65 @@ class PieceOfString(MutableSequence):
         """
         if isinstance(key, slice):
             val = [_ for _ in value]  # convert non-subscriptable type to subscriptable type
-            _s = len(self._string)
+            _s = len(self._coll)
             key = self.__slice(key)
             if key.stop >= _s:
                 split = _s - key.start
-                self._string[key.start:] = val[:split]
-                self._string[:key.stop - _s] = val[split:]
+                self._coll[key.start:] = val[:split]
+                self._coll[:key.stop - _s] = val[split:]
             else:
-                self._string[key.start:key.stop] = val
+                self._coll[key.start:key.stop] = val
         else:
-            self._string[self.__idx(key)] = value
+            self._coll[self.__idx(key)] = value
 
     def __delitem__(self, key):
         if isinstance(key, slice):
             raise NotImplementedError  # todo
-        del(self._string[self.__idx(key)])
+        del(self._coll[self.__idx(key)])
 
     def __len__(self):
-        return len(self._string)
+        return len(self._coll)
 
     def __str__(self):
-        return str(self._string)
+        return str(self._coll)
+
+
+class StringHash:
+    """
+    A CircularBuffer interface that follows the rules of Exercise 10 with respect to pointer incrementation and the use
+    of a skip value
+    """
+
+    def __init__(self, length: int):
+        self._string = CircularBuffer(range(length))
+        self._ptr = 0
+        self._skip = 0
+
+    def knot(self, length: int):
+        sub = self._string[self._ptr : self._ptr + length]
+        sub.reverse()
+        self._string[self._ptr: self._ptr + length] = sub
+
+        self._ptr += length + self._skip
+        self._skip += 1
+
+    @property
+    def string(self) -> CircularBuffer:
+        return self._string
+
+    @property
+    def hash_val(self) -> int:
+        return self._string[0] * self._string[1]
 
 
 if __name__ == '__main__':
 
-    p = PieceOfString(256)
+    p = StringHash(256)
 
     with open('./knot_lengths.txt') as file:
         lengths = [int(x) for x in file.read().strip().split(sep=',')]
         for length in lengths:
             p.knot(length)
 
-    print('First two numbers in list: {}, {}'.format(p[0], p[1]))
-    print('Their product: {}'.format(p[0] * p[1]))
+    print('First two numbers in list: {}, {}'.format(p.string[0], p.string[1]))
+    print('Their product: {}'.format(p.hash_val))
