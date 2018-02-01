@@ -208,7 +208,10 @@ if __name__ == '__main__':
     with open('./hex_steps.txt') as file:
         read_word = word_reader_factory(file)
         pt = HexPoint(0, 0, 0)
+        max_dist = 0
         for w in read_word():
             pt.step(w)
+            max_dist = max(max_dist, manhattan_dist(pt))
         print('Final location: {}'.format(pt), end='\t')
         print('Distance to location: {}'.format(manhattan_dist(pt)))
+        print('Farthest from origin during path navigation: {}'.format(max_dist))
