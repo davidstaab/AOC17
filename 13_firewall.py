@@ -1,3 +1,7 @@
+# Solutions to Ex 13 using simulation. An alternative (and frankly much better) solution to Part 2 can be found in
+# `13_firewall_math.py`.
+
+
 class Scanner:
     """
     A stateful scanner for one layer of the firewall.
@@ -62,17 +66,6 @@ if __name__ == '__main__':
                 fw.append(Scanner(0))
             fw.append(Scanner(rng))
             layer = wall_loc + 1
-
-    # todo: TEST INPUT replaces above
-    # fw = [
-    #     Scanner(3),
-    #     Scanner(2),
-    #     Scanner(0),
-    #     Scanner(0),
-    #     Scanner(4),
-    #     Scanner(0),
-    #     Scanner(4),
-    # ]
 
     #########
     # Part 1: Run through the firewall immediately
