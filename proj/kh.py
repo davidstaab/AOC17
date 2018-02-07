@@ -128,7 +128,7 @@ class KnotHash:
         if lengths is not None:
             self.knot_all(lengths)
 
-    def dense_hash(self, block_size: int) -> list:
+    def dense_hash(self, block_size: int=16) -> list:
         hash_size = int(len(self._buf) / block_size)
         dense_hash = []
         for i in range(hash_size):
