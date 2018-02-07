@@ -8,7 +8,7 @@ if __name__ == '__main__':
     # Each scanner starts in the "hot seat" where it'll catch the packet. It leaves the seat and returns every integer
     # multiple of 2(`rng` - 1) ps later. The packet reaches the hot seat (`depth` + `delay`) ps after it starts moving.
     # [dstaab] Solve by brute force. Could probably go even more quickly by using linear algebra on the system of
-    # equations, but the module operator scares me, and I don't want to read a math whitepaper today.
+    # equations, but the modulo operator scares me, and I don't want to read a math whitepaper today.
     delay, collided = 0, True
     while collided:
         collided = False
