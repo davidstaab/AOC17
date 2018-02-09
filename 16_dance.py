@@ -39,7 +39,33 @@ if __name__ == '__main__':
     line = [chr(x) for x in range(start, start + length)]
     print('Initial order: ' + ''.join(line))
 
+    instr_set = []
     with open('./dance.txt') as file:
-        for x in file.read().strip().split(','):
-            dance(x)
-    print('Final order: ' + ''.join(line))
+        instr_set = file.read().strip().split(',')
+
+    # PART 1
+    for x in instr_set:
+        dance(x)
+    print('Pt 1 final order: ' + ''.join(line))
+
+    # PART 2
+    # Confession: This problem falls into the domain of group theory in mathematics, which is way beyond my
+    # understanding of algebra. I'm going to implement the solution detailed here to practice coding:
+    # https://www.reddit.com/r/adventofcode/comments/7k5mrq/spoilers_in_title2017_day_16_part_2_cycles/drcd8vj/
+    memo = {}  # k: starting permutation, v: final permutation
+    memo_acc_ct = 0
+    for i in range(int(1e9 - 1)):
+        if i % int(1e6) == 0:
+            print(f'Iteration {i} - {memo_acc_ct} memo accesses - memo size {len(memo)}')
+        key = ''.join(line)
+        if key in memo:
+            # skip instructions, just grab result from memo
+            memo_acc_ct += 1
+            line = memo[key]
+        else:
+            for x in instr_set:
+                dance(x)
+            # add result to memo
+            memo[key] = line
+    print('Pt 2 final order: ' + ''.join(line))
+    print(f'{memo_acc_ct} total memo accesses - Final memo size {len(memo)}')
