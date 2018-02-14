@@ -1,32 +1,36 @@
-def spin(count: int):
-    global line
-    line = line[-count:] + line[:-count]
+def s(x: list) -> str:
+    return ''.join(x)
 
 
-def exchange(idx1: int, idx2: int):
-    global line
-    line[idx1], line[idx2] = line[idx2], line[idx1]
+def spin(x: list, count: int) -> list:
+    return x[-count:] + x[:-count]
 
 
-def partner(val1: str, val2: str):
-    global line
-    idx1 = line.index(val1)
-    idx2 = line.index(val2)
-    line[idx1], line[idx2] = line[idx2], line[idx1]
+def exchange(x: list, idx1: int, idx2: int) -> list:
+    x[idx1], x[idx2] = x[idx2], x[idx1]
+    return x
 
 
-def dance(instrs: list):
+def partner(x: list, val1: str, val2: str) -> list:
+    idx1 = x.index(val1)
+    idx2 = x.index(val2)
+    x[idx1], x[idx2] = x[idx2], x[idx1]
+    return x
+
+
+def dance(line: list, instrs: list) -> list:
     for x in instrs:
         instr = x[0]
         if instr == 's':
-            spin(int(x[1:]))
+            line = spin(line, int(x[1:]))
         elif instr == 'x':
             a, b = map(int, x[1:].split('/'))
-            exchange(int(a), int(b))
+            line = exchange(line, int(a), int(b))
         elif instr == 'p':
-            partner(x[1], x[3])
+            line = partner(line, x[1], x[3])
         else:
             raise ValueError(f'Invalid instruction code: {instr}')
+    return line
 
 
 if __name__ == '__main__':
@@ -34,15 +38,15 @@ if __name__ == '__main__':
     start = ord('a')
     line = [chr(x) for x in range(start, start + length)]
     line_init = line[:]
-    print('Initial order: ' + ''.join(line))
+    print('Initial order: ' + s(line))
 
     instr_set = []
     with open('./dance.txt') as file:
         instr_set = file.read().strip().split(',')
 
     # PART 1
-    dance(instr_set)
-    print('Pt 1 final order: ' + ''.join(line), end='\n\n')
+    line = dance(line, instr_set)
+    print(f'Pt 1 final order: ' + s(line) + '\n')
 
     # PART 2
     # Confession: I had to read other people's answers to understand how this problem is solved. I'm doing it with two
@@ -51,27 +55,30 @@ if __name__ == '__main__':
     # the code becomes a bit more complex, but it's still feasible.
 
     dance_memo = {}  # k: starting permutation, v: final permutation
-    cycle = [''.join(line_init), ''.join(line)]  # permutations already seen in Pt 1
-    key = ''.join(line)
-    for i in range(int(1e9) - 1):
+    line = line_init[:]
+    key = s(line)
+    cycle = [key]
+    for i in range(int(1e9)):
         if key in dance_memo:
             line = dance_memo[key]
+            key = s(line)
         else:
-            dance(instr_set)
+            line = dance(line, instr_set)
             dance_memo[key] = line
+            key = s(line)
 
-        key = ''.join(line)
         if key in cycle:  # Cycle found. This # of dances returns the string back to its original state.
             break
+
         cycle.append(key)
-    print(f'Cycle found with length {len(cycle)}')
+    print(f'Cycle starting from initial value found. Length: {len(cycle)}')
+    printout = ''
+    for k in cycle:
+        printout += f'{k} -> ' + s(dance_memo[k]) + '\n'
+    print(printout)
 
-    line = line_init
-    for i in range(int(1e9) % len(cycle)):
-        if key in dance_memo:
-            line = dance_memo[key]
-        else:
-            dance(instr_set)
-            dance_memo[key] = line
+    instr_ct = int(1e9) % len(cycle)
+    print(f'Instructions after last cycle: {instr_ct}')
+    final = cycle[instr_ct]  # value after `instr_ct`th dance already known. just get it.
 
-    print('Pt 2 final order: ' + ''.join(line))
+    print('Pt 2 final order: ' + final)
