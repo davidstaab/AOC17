@@ -13,9 +13,6 @@ class CircularBuffer(MutableSequence):
         else:
             raise ValueError('data_source does not implement __iter__.')
 
-    def insert(self, index, obj):
-        self._coll.insert(self.__idx(index), obj)
-
     def __idx(self, index: int) -> int:
         """
         Guarantees no 'index out of range' errors by mapping index into legal range.
@@ -47,6 +44,20 @@ class CircularBuffer(MutableSequence):
 
         # Map slice bounds into range of [0 : 2*len - 1]
         return slice(start, stop, key.step)
+
+    def insert(self, index, obj) -> int:
+        """
+        Insert an item into the list before `index`.
+        :return: (Unwrapped) Index of newly inserted item
+        """
+        i = self.__idx(index)
+        if i == 0:
+            self._coll.append(obj)
+            oi = len(self._coll) - 1
+        else:
+            self._coll.insert(i, obj)
+            oi = i
+        return oi
 
     def __getitem__(self, key):
         """
