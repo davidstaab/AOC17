@@ -35,9 +35,8 @@ def step(cursor: tuple, direction: tuple) -> tuple:
 def turn(maze: np.ndarray, cursor: tuple, direction: tuple) -> tuple:
     dirs = [(-1, 0), (1, 0)] if direction[0] == 0 else [(0, -1), (0, 1)]
     for d in dirs:
-        c = step(cursor, d)
-        if maze[c][0] != end:
-            return c, d
+        if maze[step(cursor, d)][0] != end:
+            return d
     raise IndexError(f'Could not find a valid turn from position {cursor}')
 
 
@@ -57,14 +56,19 @@ if __name__ == '__main__':
 
     cursor, direction = find_start(maze)
     phrase = ''
+    steps = 0
     while 1:
         char = maze[cursor][0]
         if char == end:
             break
         elif char == tn:
-            cursor, direction = turn(maze, cursor, direction)
+            direction = turn(maze, cursor, direction)
+            cursor = step(cursor, direction)
+            steps += 1
         else:
             if char not in (ud, lr):
                 phrase += char
             cursor = step(cursor, direction)
+            steps += 1
     print(f'Part 1: {phrase}')
+    print(f'Part 2: {steps} steps')
