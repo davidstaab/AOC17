@@ -36,7 +36,7 @@ if __name__ == '__main__':
             k, v = line.rstrip().replace('.', '0').replace('#', '1').replace('/', '').split(' => ')
             rules[k] = v
 
-    # expand dictionary to include all rotations and flips of each key. saves time and code later.
+    # expand dictionary to include all rotations and flips of each key. saves time later.
     new_rules = {}
     for k in rules:
         a = s_to_a(k)
@@ -51,10 +51,9 @@ if __name__ == '__main__':
     rules.update(new_rules)
     del new_rules
 
-    for _ in range(5):
+    for i in range(1, 19):
         if image.size % 4 == 0:  # can be split into 2x2 subarrays
             image = enhance(image, sub_dim=2)
         elif image.size % 9 == 0:  # can be split into 3x3 subarrays
             image = enhance(image, sub_dim=3)
-    print(f"Part 1: {a_to_s(image).count('1')} pixels on.", end='\n\n')
-    print(image)
+        print(f"i={i}: {a_to_s(image).count('1')} pixels on.")
