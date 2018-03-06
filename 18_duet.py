@@ -1,8 +1,94 @@
+from abc import abstractmethod
 from collections import deque
-from proj import prog
+from collections.abc import Iterator
+from proj.prog import Executor
 
 
-class Part1Program(prog.Interpreter):
+class Interpreter(Iterator):
+    """
+    Is a translator from input grammar to Python grammar.Is also an iterator that executes one statement per call.
+    Has an Executor and uses this when called in iteration.
+    """
+
+    def _val(self, x: str) -> str:
+        """
+        Returns the integer value of the input, formatted as a string
+        :param x: An integer value or a register name
+        :return: `x`, if `x` contains only an integer, or the eval of `x` in this object's local execution context
+        """
+        return x if x.isdigit() else str(self.exc.evals(x))
+
+    @property
+    def vars(self) -> dict:
+        return self.exc.sbox_locals
+
+    @abstractmethod
+    def _snd(self, reg: str) -> str:
+        """
+        Placeholder for the `snd` instruction's behavior. User needs to implement this and assign it to object.
+        :return: A display string of the operation performed by this instruction, i.e. '10: Did a thing'
+        """
+        pass
+
+    @abstractmethod
+    def _rcv(self, reg) -> str:
+        """
+        Placeholder for the 'rcv` instruction's behavior. User needs to implement this and assign it to object.
+        :return: A display string of the operation performed by this instruction, i.e. '10: Did a thing'
+        """
+        pass
+
+    def __init__(self, instruction_set: list, pid: int=None):
+        context = None if pid is None else {'p': pid}
+        self.exc = Executor(sbox_locals=context)
+        self.instrs = instruction_set
+        self.i = 0
+
+    def __iter__(self):
+        return super().__iter__()  # use default behavior
+
+    def __next__(self):
+        if 0 <= self.i < len(self.instrs):
+
+            instr = self.instrs[self.i][0]
+            reg = self.instrs[self.i][1]
+            if reg not in self.exc.sbox_locals:
+                self.exc.sbox_locals[reg] = 0
+
+            incr = 1
+            if instr == 'set':
+                cmd = f'{reg} = ' + self._val(self.instrs[self.i][2])
+                self.exc.execs(cmd)
+                ret = f'{self.i}: ' + cmd
+            elif instr == 'add':
+                cmd = f'{reg} += ' + self._val(self.instrs[self.i][2])
+                self.exc.execs(cmd)
+                ret = f'{self.i}: ' + cmd
+            elif instr == 'mul':
+                cmd = f'{reg} *= ' + self._val(self.instrs[self.i][2])
+                self.exc.execs(cmd)
+                ret = f'{self.i}: ' + cmd
+            elif instr == 'mod':
+                cmd = f'{reg} %= ' + self._val(self.instrs[self.i][2])
+                self.exc.execs(cmd)
+                ret = f'{self.i}: ' + cmd
+            elif instr == 'snd':
+                ret = self._snd(reg)
+            elif instr == 'rcv':
+                ret = self._rcv(reg)
+            elif instr == 'jgz' and int(self._val(reg)) > 0:
+                incr = int(self._val(self.instrs[self.i][2]))
+                ret = f'{self.i}: Jump to {self.i + incr}'
+            else:
+                ret = f'{self.i}: {instr} no-op'
+
+            self.i += incr
+            return ret
+        else:
+            raise StopIteration
+
+
+class Part1Program(Interpreter):
 
     def _snd(self, reg: str) -> str:
         """
@@ -21,7 +107,7 @@ class Part1Program(prog.Interpreter):
             raise StopIteration(m)
 
 
-class Part2Program(prog.Interpreter):
+class Part2Program(Interpreter):
 
     class FailedRcvError(Exception):
         """Notification that a program failed to receive a value when trying to use its deque"""
@@ -92,10 +178,10 @@ if __name__ == '__main__':
         for i, p in enumerate(progs):
             try:
                 cmd = next(p)
-                print(f'p{i}: ' + cmd)  # Pretty, but slow
+                # print(f'p{i}: ' + cmd)  # Pretty, but slow
                 running[i] = True
             except Part2Program.FailedRcvError as e:
-                print(f'p{i}: ' + str(e))  # Pretty, but slow
+                # print(f'p{i}: ' + str(e))  # Pretty, but slow
                 running[i] = False
         try:
             progs[1].rq.append(progs[0].sq.popleft())
